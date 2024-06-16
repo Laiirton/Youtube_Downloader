@@ -1,6 +1,5 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
-const PythonShell = require('python-shell');
 
 let mainWindow;
 
@@ -9,12 +8,16 @@ function createWindow() {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true
+      nodeIntegration: true,
+      contextIsolation: false
     }
   });
 
-  mainWindow.loadFile('index.html');
+  mainWindow.setMenuBarVisibility(false);
+
+  mainWindow.setResizable(false);
+
+  mainWindow.loadFile('./app/index.html');
 }
 
 app.whenReady().then(() => {
@@ -30,5 +33,19 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+ipcMain.on('download-video', (event, videoUrl) => {
+  console.log('Video URL to download:', videoUrl);
+  // Lógica de download do vídeo
+});
+
+ipcMain.on('select-folder', async (event) => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory']
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    event.sender.send('folder-selected', result.filePaths[0]);
   }
 });

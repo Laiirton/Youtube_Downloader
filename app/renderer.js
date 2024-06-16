@@ -1,23 +1,83 @@
-const downloadBtn = document.getElementById('download-btn');
+const { ipcRenderer } = require('electron');
+const path = require('path');
+const { spawn } = require('child_process');
 
+const videoUrlInput = document.getElementById('video-url');
+const downloadBtn = document.getElementById('download-btn');
+const selectFolderBtn = document.getElementById('select-folder-btn');
+const progressBar = document.getElementById('progress-bar');
+const statusMessage = document.getElementById('status-message');
+
+let downloadFolder = '';
+let pythonProcess = null; // Para controlar o processo Python
+
+// Evento: clicar no botão "Baixar Vídeo"
 downloadBtn.addEventListener('click', () => {
-  const videoUrl = document.getElementById('video-url').value;
-  // Chame a função para baixar o vídeo usando Python
-  downloadVideo(videoUrl);
+    const videoUrl = videoUrlInput.value.trim();
+
+    if (!videoUrl) {
+        statusMessage.textContent = 'Por favor, insira uma URL de vídeo válida.';
+        return;
+    }
+
+    if (!downloadFolder) {
+        statusMessage.textContent = 'Por favor, selecione uma pasta de destino.';
+        return;
+    }
+
+    // Inicia o download (se não houver outro em andamento)
+    if (!pythonProcess) {
+        startDownload(videoUrl, downloadFolder);
+    } else {
+        statusMessage.textContent = 'Um download já está em andamento.';
+    }
 });
 
-// Função para chamar o código Python
-function downloadVideo(url) {
-  const PythonShell = require('python-shell');
+// Evento: clicar no botão "Escolher Pasta"
+selectFolderBtn.addEventListener('click', () => {
+    ipcRenderer.send('select-folder');
+});
 
-  let options = {
-    mode: 'text',
-    pythonPath: '/usr/bin/python3', // Caminho para o executável Python
-    scriptPath: '../python' // Diretório que contém o script Python
-  };
+// Recebe a pasta selecionada do processo principal
+ipcRenderer.on('folder-selected', (event, folderPath) => {
+    downloadFolder = folderPath;
+    statusMessage.textContent = `Pasta selecionada: ${folderPath}`;
+});
 
-  PythonShell.run('downloader.py', options, function (err, results) {
-    if (err) throw err;
-    console.log('Vídeo baixado:', results);
+// Função para iniciar o download
+function startDownload(videoUrl, folderPath) {
+    statusMessage.textContent = 'Iniciando download...';
+    progressBar.value = 0; // Reinicia a barra de progresso
+
+    const pythonScriptPath = path.join(__dirname, '..', 'python_scripts', 'youtube_downloader.py');
+
+    // Executa o script Python
+    pythonProcess = spawn('python', [pythonScriptPath, videoUrl, folderPath]);
+
+    pythonProcess.stdout.on('data', (data) => {
+        const message = data.toString();
+
+        if (message.startsWith('Progresso:')) {
+            const progress = parseFloat(message.split(':')[1].trim());
+            progressBar.value = progress;
+            statusMessage.textContent = `Progresso: ${progress.toFixed(2)}%`;
+        } else {
+            console.log(message); // Outras mensagens do Python
+        }
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      const errorMessage = data.toString();
+      console.error(`Erro no script Python: ${errorMessage}`);
+      statusMessage.textContent = `Erro no download: ${errorMessage}`;
   });
+
+    pythonProcess.on('close', (code) => {
+        if (code === 0) {
+            statusMessage.textContent = 'Download concluído!';
+        } else {
+            statusMessage.textContent = 'O download falhou.';
+        }
+        pythonProcess = null; // Limpa o processo ao finalizar
+    });
 }
