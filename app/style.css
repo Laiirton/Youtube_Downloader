@@ -10,7 +10,7 @@ body {
   }
 
   .container {
-    background: rgba(255, 255, 255, 0.5); /* Add transparency to the background */
+    background: rgba(255, 255, 255, 0.0); /* Add transparency to the background */
     padding: 30px;
     border-radius: 15px; /* More rounded corners */
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* Subtler shadow */
@@ -98,6 +98,6 @@ progress::-webkit-progress-value {
 }
 
 #status-message {
-  color: #333;
+  color: #ffffff;
   font-size: 14px;
 }

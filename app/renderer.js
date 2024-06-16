@@ -1,6 +1,6 @@
 const { ipcRenderer } = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
+const { exec } = require('child_process');
 
 const videoUrlInput = document.getElementById('video-url');
 const downloadBtn = document.getElementById('download-btn');
@@ -47,14 +47,27 @@ ipcRenderer.on('folder-selected', (event, folderPath) => {
 // Função para iniciar o download
 function startDownload(videoUrl, folderPath) {
     statusMessage.textContent = 'Iniciando download...';
-    progressBar.value = 0; // Reinicia a barra de progresso
+    progressBar.value = 0;
 
-    const pythonScriptPath = path.join(__dirname, '..', 'python_scripts', 'youtube_downloader.py');
+    const pythonScriptPath = path.join(__dirname, '..', 'python_scripts', 'downloader.py');
+    const command = `python "${pythonScriptPath}" "${videoUrl}" "${folderPath}"`;
 
-    // Executa o script Python
-    pythonProcess = spawn('python', [pythonScriptPath, videoUrl, folderPath]);
+    const pythonProcess = exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Erro no script Python: ${error}`);
+            statusMessage.textContent = `Erro no download: ${error}`;
+            return;
+        }
+
+        console.log(`Saída do script Python: ${stdout}`);
+        statusMessage.textContent = 'Download concluído!';
+    });
 
     pythonProcess.stdout.on('data', (data) => {
+        console.log(data.toString());
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
         const message = data.toString();
 
         if (message.startsWith('Progresso:')) {
@@ -62,22 +75,8 @@ function startDownload(videoUrl, folderPath) {
             progressBar.value = progress;
             statusMessage.textContent = `Progresso: ${progress.toFixed(2)}%`;
         } else {
-            console.log(message); // Outras mensagens do Python
+            console.error(`Erro no script Python: ${message}`);
+            statusMessage.textContent = `Erro no download: ${message}`;
         }
-    });
-
-    pythonProcess.stderr.on('data', (data) => {
-      const errorMessage = data.toString();
-      console.error(`Erro no script Python: ${errorMessage}`);
-      statusMessage.textContent = `Erro no download: ${errorMessage}`;
-  });
-
-    pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            statusMessage.textContent = 'Download concluído!';
-        } else {
-            statusMessage.textContent = 'O download falhou.';
-        }
-        pythonProcess = null; // Limpa o processo ao finalizar
     });
 }
