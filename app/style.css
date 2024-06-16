@@ -24,7 +24,7 @@ body {
 
 /* Title */
 h1 {
-  color: #333;
+  color: rgb(224, 215, 215); /* Light gray color */
   margin-bottom: 30px;
 }
 
