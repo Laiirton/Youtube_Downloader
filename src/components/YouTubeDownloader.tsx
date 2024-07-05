@@ -56,13 +56,17 @@ const YouTubeDownloader: React.FC = () => {
   };
 
   const handleFetchInfo = () => {
-    setVideoInfo({
-      title: 'Título do Vídeo',
-      duration: '10:30',
-      views: '1M views',
-      uploadDate: '01/01/2024'
-    });
-    setShowInfo(true);
+    if (showInfo) {
+      setShowInfo(false);
+    } else {
+      setVideoInfo({
+        title: 'Astronomia - Vicetone & Tony Igy',
+        duration: '3:19',
+        views: '1.2B',
+        uploadDate: 'Há 8 anos'
+      });
+      setShowInfo(true);
+    }
   };
 
   const handleFolderSelect = () => {
