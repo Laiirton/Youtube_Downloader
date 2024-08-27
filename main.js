@@ -50,15 +50,26 @@ ipcMain.on('open-file-dialog', (event) => {
 ipcMain.on('download-video', (event, { url, outputPath, quality }) => {
   let options = {
     mode: 'text',
-    pythonPath: 'python',
+    pythonPath: 'python3', // Alterado para 'python3'
     args: [url, outputPath, quality],
   };
 
-  PythonShell.run('youtube_downloader.py', options, function (err, results) {
+  let pyshell = new PythonShell('youtube_downloader.py', options);
+
+  pyshell.on('message', function (message) {
+    console.log(message);
+    event.reply('python-output', message);
+  });
+
+  pyshell.end(function (err, code, signal) {
     if (err) {
+      console.error('Erro:', err);
       event.reply('download-error', err.toString());
     } else {
-      event.reply('download-complete', results);
+      console.log('O código de saída foi: ' + code);
+      console.log('O sinal de saída foi: ' + signal);
+      console.log('finalizado');
+      event.reply('download-complete');
     }
   });
 
