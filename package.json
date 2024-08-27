@@ -1,0 +1,18 @@
+{
+  "name": "youtube-downloader",
+  "version": "1.0.0",
+  "description": "A beautiful and functional YouTube downloader app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "install-electron": "npm install electron@13.1.7 --save-dev"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^13.1.7"
+  },
+  "dependencies": {
+    "python-shell": "^3.0.1"
+  }
+}
