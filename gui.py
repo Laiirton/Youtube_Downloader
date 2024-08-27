@@ -1,5 +1,7 @@
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import filedialog
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
 import threading
 from downloader import YouTubeDownloader
 
@@ -8,45 +10,57 @@ class YouTubeDownloaderGUI:
         self.master = master
         self.downloader = YouTubeDownloader()
         self.master.title("YouTube Downloader")
-        self.master.geometry("600x400")
-        self.master.configure(bg="#f0f0f0")
+        self.master.geometry("800x600")
+        self.style = ttk.Style(theme="darkly")
 
         self.create_widgets()
 
     def create_widgets(self):
+        # Main frame
+        self.main_frame = ttk.Frame(self.master, padding=20)
+        self.main_frame.pack(fill=BOTH, expand=YES)
+
+        # Title
+        title_label = ttk.Label(self.main_frame, text="YouTube Downloader", font=("Helvetica", 28, "bold"), bootstyle="inverse-primary")
+        title_label.pack(pady=(0, 30))
+
         # URL input
-        url_label = tk.Label(self.master, text="YouTube URL:", bg="#f0f0f0", font=("Arial", 12))
-        url_label.pack(pady=(20, 5))
-        self.url_input = tk.Entry(self.master, width=50, font=("Arial", 12))
-        self.url_input.pack()
+        url_frame = ttk.Frame(self.main_frame)
+        url_frame.pack(fill=X, pady=(0, 20))
+        url_label = ttk.Label(url_frame, text="URL do vídeo:", font=("Helvetica", 12))
+        url_label.pack(side=LEFT, padx=(0, 10))
+        self.url_input = ttk.Entry(url_frame, font=("Helvetica", 12), bootstyle="primary")
+        self.url_input.pack(side=LEFT, expand=YES, fill=X)
 
         # Output path
-        path_label = tk.Label(self.master, text="Output path:", bg="#f0f0f0", font=("Arial", 12))
-        path_label.pack(pady=(20, 5))
-        path_frame = tk.Frame(self.master, bg="#f0f0f0")
-        path_frame.pack()
-        self.path_input = tk.Entry(path_frame, width=40, font=("Arial", 12))
-        self.path_input.pack(side=tk.LEFT)
-        self.path_button = tk.Button(path_frame, text="Browse", command=self.choose_output_path, font=("Arial", 12))
-        self.path_button.pack(side=tk.LEFT, padx=(10, 0))
+        path_frame = ttk.Frame(self.main_frame)
+        path_frame.pack(fill=X, pady=(0, 20))
+        path_label = ttk.Label(path_frame, text="Salvar em:", font=("Helvetica", 12))
+        path_label.pack(side=LEFT, padx=(0, 10))
+        self.path_input = ttk.Entry(path_frame, font=("Helvetica", 12), bootstyle="primary")
+        self.path_input.pack(side=LEFT, expand=YES, fill=X)
+        self.path_button = ttk.Button(path_frame, text="Procurar", command=self.choose_output_path, bootstyle="info-outline", width=10)
+        self.path_button.pack(side=LEFT, padx=(10, 0))
 
         # Quality selection
-        quality_label = tk.Label(self.master, text="Quality:", bg="#f0f0f0", font=("Arial", 12))
-        quality_label.pack(pady=(20, 5))
-        self.quality_var = tk.StringVar(value="High")
-        quality_combo = ttk.Combobox(self.master, textvariable=self.quality_var, values=["High", "Medium", "Low"], font=("Arial", 12))
-        quality_combo.pack()
+        quality_frame = ttk.Frame(self.main_frame)
+        quality_frame.pack(fill=X, pady=(0, 30))
+        quality_label = ttk.Label(quality_frame, text="Qualidade:", font=("Helvetica", 12))
+        quality_label.pack(side=LEFT, padx=(0, 10))
+        self.quality_var = tk.StringVar(value="Alta")
+        quality_combo = ttk.Combobox(quality_frame, textvariable=self.quality_var, values=["Alta", "Média", "Baixa"], font=("Helvetica", 12), bootstyle="primary", state="readonly")
+        quality_combo.pack(side=LEFT, expand=YES, fill=X)
 
         # Download button
-        self.download_button = tk.Button(self.master, text="Download", command=self.start_download, bg="#4CAF50", fg="white", font=("Arial", 14, "bold"))
-        self.download_button.pack(pady=20)
+        self.download_button = ttk.Button(self.main_frame, text="Baixar Vídeo", command=self.start_download, bootstyle="success", width=20)
+        self.download_button.pack(pady=(0, 20))
 
         # Progress bar
-        self.progress_bar = ttk.Progressbar(self.master, orient=tk.HORIZONTAL, length=400, mode='determinate')
-        self.progress_bar.pack(pady=10)
+        self.progress_bar = ttk.Progressbar(self.main_frame, length=400, bootstyle="success-striped")
+        self.progress_bar.pack(pady=(0, 10))
 
         # Status label
-        self.status_label = tk.Label(self.master, text="", bg="#f0f0f0", font=("Arial", 12), wraplength=580, justify="center")
+        self.status_label = ttk.Label(self.main_frame, text="", font=("Helvetica", 12), wraplength=760, justify="center")
         self.status_label.pack()
 
     def choose_output_path(self):
@@ -61,11 +75,11 @@ class YouTubeDownloaderGUI:
         quality = self.quality_var.get().lower()
 
         if not url or not output_path:
-            self.status_label.config(text="Please enter a URL and select an output path.")
+            self.status_label.config(text="Por favor, insira uma URL e selecione um local para salvar.")
             return
 
         self.download_button.config(state=tk.DISABLED)
-        self.status_label.config(text="Downloading...")
+        self.status_label.config(text="Baixando...")
         self.progress_bar['value'] = 0
 
         thread = threading.Thread(target=self.download_thread, args=(url, output_path, quality))
@@ -83,10 +97,10 @@ class YouTubeDownloaderGUI:
 
     def download_finished(self):
         self.download_button.config(state=tk.NORMAL)
-        self.status_label.config(text="Download completed!")
-        self.progress_bar['value'] = 0
+        self.status_label.config(text="Download concluído com sucesso!")
+        self.progress_bar['value'] = 100
 
     def download_error(self, error_message):
         self.download_button.config(state=tk.NORMAL)
-        self.status_label.config(text=f"Error: {error_message}")
+        self.status_label.config(text=f"Erro: {error_message}")
         self.progress_bar['value'] = 0
