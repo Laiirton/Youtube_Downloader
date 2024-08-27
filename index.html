@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Downloader</h1>
+        <div class="input-group">
+            <input type="text" id="url-input" placeholder="Enter YouTube URL">
+        </div>
+        <div class="input-group">
+            <input type="text" id="output-path" placeholder="Select output folder">
+            <button id="select-folder">Select Folder</button>
+        </div>
+        <div class="input-group">
+            <select id="quality-select">
+                <option value="highest">Highest Quality</option>
+                <option value="720p">720p</option>
+                <option value="480p">480p</option>
+                <option value="360p">360p</option>
+            </select>
+        </div>
+        <button id="download-btn">Download</button>
+        <div id="progress-bar">
+            <div id="progress"></div>
+        </div>
+        <p id="status"></p>
+    </div>
+    <script src="renderer.js"></script>
+</body>
+</html>
