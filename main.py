@@ -1,10 +1,10 @@
-import tkinter as tk
+import ttkbootstrap as ttk
 from gui import YouTubeDownloaderGUI
 import logging
 
 def main():
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    root = tk.Tk()
+    root = ttk.Window(themename="superhero")
     app = YouTubeDownloaderGUI(root)
     root.mainloop()
 
