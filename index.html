@@ -5,17 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Downloader</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <div class="titlebar">
         <div class="titlebar-drag">YouTube Downloader</div>
         <div class="titlebar-buttons">
-            <button id="minimize-button">&#8211;</button>
-            <button id="close-button">&#10005;</button>
+            <button id="minimize-button"><i class="fas fa-minus"></i></button>
+            <button id="close-button"><i class="fas fa-times"></i></button>
         </div>
     </div>
     <div class="container">
-        <input type="text" id="url-input" placeholder="Cole o URL do vídeo aqui">
+        <div class="input-group">
+            <input type="text" id="url-input" placeholder="Cole o URL do vídeo aqui">
+        </div>
         <div class="quality-selector">
             <label for="resolution">Resolução:</label>
             <select id="resolution">
@@ -27,8 +30,8 @@
                 <option value="1080p">1080p</option>
             </select>
         </div>
-        <button id="path-button">Escolher pasta de destino</button>
-        <button id="download-button">Baixar</button>
+        <button id="path-button"><i class="fas fa-folder-open"></i> Escolher pasta de destino</button>
+        <button id="download-button"><i class="fas fa-download"></i> Baixar</button>
         <div class="progress-container">
             <div id="progress-bar"></div>
         </div>
