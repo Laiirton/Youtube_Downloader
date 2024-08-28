@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onDownloadComplete: (callback) => ipcRenderer.on('download-complete', callback),
   onDownloadError: (callback) => ipcRenderer.on('download-error', callback),
   openFolderDialog: () => ipcRenderer.invoke('open-folder-dialog'),
+  getVideoFormats: (url) => ipcRenderer.invoke('get-video-formats', url),
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   maximizeWindow: () => ipcRenderer.send('maximize-window'),
   closeWindow: () => ipcRenderer.send('close-window')
