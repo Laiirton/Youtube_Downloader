@@ -1,7 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
-const fs = require('fs');
-const youtubedl = require('youtube-dl-exec');
+const { PythonShell } = require('python-shell');
 
 let mainWindow;
 
@@ -9,27 +8,19 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
-    frame: false,
-    resizable: false,
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
-    }
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+    frame: false, // Remove a barra de título padrão
+    resizable: false, // Impede o redimensionamento da janela
   });
 
   mainWindow.loadFile('index.html');
+  mainWindow.setMenu(null); // Remove o menu do Electron
 }
 
-app.whenReady().then(() => {
-  createWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
+app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -37,125 +28,58 @@ app.on('window-all-closed', () => {
   }
 });
 
-function sanitizeFilename(filename) {
-  return filename.replace(/[/\\?%*:|"<>]/g, '-');
-}
-
-ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => {
-  return new Promise((resolve, reject) => {
-    console.log(`Starting download for URL: ${url}`);
-
-    const output = path.join(outputPath, '%(title)s.%(ext)s');
-
-    const args = [
-      url,
-      '-f', quality,
-      '-o', output,
-      '--no-playlist',
-      '--newline',
-    ];
-
-    const downloader = youtubedl.exec(args, {});
-
-    let lastProgress = 0;
-
-    downloader.stdout.on('data', (data) => {
-      const lines = data.toString().trim().split('\n');
-      lines.forEach(line => {
-        const progressMatch = line.match(/(\d+\.\d+)%\s+of\s+~?(\d+\.\d+)(\w+)\s+at\s+(\d+\.\d+)(\w+\/s)\s+ETA\s+(\d+:\d+)/);
-        if (progressMatch) {
-          const [, percent, size, unit, speed, speedUnit, eta] = progressMatch;
-          const progress = {
-            percent: parseFloat(percent),
-            totalSize: `${size} ${unit}`,
-            currentSpeed: `${speed} ${speedUnit}`,
-            eta: eta
-          };
-          
-          if (progress.percent > lastProgress + 1) {
-            lastProgress = progress.percent;
-            event.sender.send('download-progress', progress);
-          }
-        }
-      });
-    });
-
-    downloader.on('close', (code) => {
-      if (code === 0) {
-        console.log('Download completed');
-        event.sender.send('download-complete');
-        resolve('Download completed successfully');
-      } else {
-        const error = `Download failed with code ${code}`;
-        console.error(error);
-        event.sender.send('download-error', error);
-        reject(new Error(error));
-      }
-    });
-
-    downloader.stderr.on('data', (data) => {
-      console.error(`stderr: ${data}`);
-    });
-  });
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
 });
 
-ipcMain.handle('open-folder-dialog', async (event) => {
+ipcMain.on('choose-directory', async (event) => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory']
   });
-  if (result.canceled) {
-    return null;
-  } else {
-    return result.filePaths[0];
+  if (!result.canceled) {
+    event.reply('directory-selected', result.filePaths[0]);
   }
 });
 
-ipcMain.handle('get-video-formats', async (event, url) => {
-  try {
-    const result = await youtubedl(url, {
-      dumpSingleJson: true,
-      noCheckCertificates: true,
-      noWarnings: true,
-      preferFreeFormats: true,
-    });
-    
-    const formats = result.formats
-      .filter(format => format.vcodec !== 'none' && format.acodec !== 'none')
-      .map(format => ({
-        format_id: format.format_id,
-        qualityLabel: format.height ? `${format.height}p` : (format.quality_label || 'Audio only'),
-        container: format.ext,
-        resolution: format.height || 0,
-        fps: format.fps || 0,
-        filesize: format.filesize,
-        vcodec: format.vcodec,
-        acodec: format.acodec
-      }))
-      .sort((a, b) => b.resolution - a.resolution || b.fps - a.fps);
+ipcMain.on('start-download', (event, { url, resolution, savePath }) => {
+  let options = {
+    mode: 'text',
+    pythonPath: 'python',
+    pythonOptions: ['-u'],
+    scriptPath: __dirname,
+    args: [url, resolution, savePath]
+  };
 
-    const uniqueFormats = formats.filter((format, index, self) =>
-      index === self.findIndex((t) => t.resolution === format.resolution && t.container === format.container)
-    );
+  console.log(`Iniciando download com opções: ${JSON.stringify(options)}`);
 
-    return uniqueFormats;
-  } catch (error) {
-    console.error('Error fetching video formats:', error);
-    throw error;
-  }
+  let pyshell = new PythonShell('youtube_downloader.py', options);
+
+  pyshell.on('message', function (message) {
+    console.log('Python output:', message);
+    if (message.startsWith('PROGRESS:')) {
+      const percent = parseFloat(message.split(':')[1]);
+      event.reply('download-progress', percent);
+    } else if (message === 'COMPLETE') {
+      event.reply('download-complete');
+    } else if (message.startsWith('ERROR:')) {
+      event.reply('download-error', message);
+    }
+  });
+
+  pyshell.end(function (err) {
+    if (err) {
+      console.error('Erro ao executar o script Python:', err);
+      event.reply('download-error', err.toString());
+    }
+  });
 });
 
 ipcMain.on('minimize-window', () => {
   mainWindow.minimize();
 });
 
-ipcMain.on('maximize-window', () => {
-  if (mainWindow.isMaximized()) {
-    mainWindow.unmaximize();
-  } else {
-    mainWindow.maximize();
-  }
-});
-
 ipcMain.on('close-window', () => {
-  mainWindow.close();
+  app.quit();
 });
