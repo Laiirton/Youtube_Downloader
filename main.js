@@ -45,29 +45,35 @@ ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => 
   return new Promise((resolve, reject) => {
     console.log(`Starting download for URL: ${url}`);
 
-    const output = path.join(outputPath, '%(title)s.%(ext)s');
+    const sanitizedOutput = path.join(outputPath, '%(title)s.%(ext)s');
 
     const args = [
       url,
       '-f', quality,
-      '-o', output,
+      '-o', sanitizedOutput,
       '--no-playlist',
       '--newline',
     ];
 
+    console.log('Download command:', youtubedl.execPath, args.join(' ')); // Log do comando
+
     const downloader = youtubedl.exec(args, {});
 
     let lastProgress = 0;
+    let totalSize = '0B';
 
     downloader.stdout.on('data', (data) => {
       const lines = data.toString().trim().split('\n');
       lines.forEach(line => {
+        console.log('yt-dlp output:', line); // Log da saída do yt-dlp
         const progressMatch = line.match(/(\d+\.\d+)%\s+of\s+~?(\d+\.\d+)(\w+)\s+at\s+(\d+\.\d+)(\w+\/s)\s+ETA\s+(\d+:\d+)/);
         if (progressMatch) {
           const [, percent, size, unit, speed, speedUnit, eta] = progressMatch;
+          totalSize = `${size} ${unit}`;
           const progress = {
             percent: parseFloat(percent),
-            totalSize: `${size} ${unit}`,
+            totalSize: totalSize,
+            downloaded: `${(parseFloat(size) * parseFloat(percent) / 100).toFixed(2)} ${unit}`,
             currentSpeed: `${speed} ${speedUnit}`,
             eta: eta
           };
