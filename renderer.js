@@ -44,11 +44,16 @@ ipcRenderer.on('download-complete', () => {
     statusLabel.textContent = 'Download concluído!';
     downloadButton.disabled = false;
     progressBar.style.width = '100%';
+    urlInput.value = ''; // Limpa o campo de URL após o download
 });
 
 ipcRenderer.on('download-error', (event, error) => {
     statusLabel.textContent = `Erro: ${error}`;
     downloadButton.disabled = false;
+});
+
+ipcRenderer.on('download-status', (event, message) => {
+    statusLabel.textContent = message;
 });
 
 minimizeButton.addEventListener('click', () => {
