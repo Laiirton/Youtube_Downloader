@@ -42,7 +42,9 @@ function sanitizeFilename(filename) {
 
 ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => {
   try {
+    console.log(`Starting download for URL: ${url}`);
     const info = await ytdl.getInfo(url);
+    console.log('Video info retrieved successfully');
     let format;
     
     if (quality === 'high') {
@@ -52,6 +54,7 @@ ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => 
     } else {
       format = ytdl.chooseFormat(info.formats, { quality: 'lowestvideo' });
     }
+    console.log(`Selected format: ${format.qualityLabel}`);
 
     // Create output directory if it doesn't exist
     if (!fs.existsSync(outputPath)) {
@@ -60,6 +63,7 @@ ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => 
 
     const sanitizedTitle = sanitizeFilename(info.videoDetails.title);
     const output = path.join(outputPath, `${sanitizedTitle}.${format.container}`);
+    console.log(`Output file: ${output}`);
     const video = ytdl(url, { format });
 
     let starttime;
@@ -67,6 +71,7 @@ ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => 
 
     video.once('response', () => {
       starttime = Date.now();
+      console.log('Download started');
     });
 
     video.on('progress', (chunkLength, downloaded, total) => {
@@ -83,10 +88,12 @@ ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => 
     });
 
     video.on('end', () => {
+      console.log('Download completed');
       event.sender.send('download-complete');
     });
 
   } catch (error) {
+    console.error('Error in download-video:', error);
     event.sender.send('download-error', error.message);
   }
 });
