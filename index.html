@@ -1,43 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Downloader</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Remova ou comente esta parte se existir -->
-    <!--
-    <div class="window-controls-container">
-        <div class="window-controls animate__animated animate__fadeInDown">
-            <button id="minimize-button" class="control-button">_</button>
-            <button id="maximize-button" class="control-button">□</button>
-            <button id="close-button" class="control-button">X</button>
+    <div class="titlebar">
+        <div class="titlebar-drag">YouTube Downloader</div>
+        <div class="titlebar-buttons">
+            <button id="minimize-button">-</button>
+            <button id="close-button">×</button>
         </div>
     </div>
-    -->
-    <div class="drag-region"></div>
-    <div class="content-container">
-        <form id="download-form" class="animate__animated animate__fadeInUp">
-            <label for="video-url">Video URL:</label>
-            <input type="text" id="video-url" required>
-            <label for="output-path">Save to:</label>
-            <div class="input-group">
-                <input type="text" id="output-path" required>
-                <button type="button" id="browse-button">Browse</button>
-            </div>
-            <label for="quality">Quality:</label>
-            <select id="quality" required>
-                <option value="" disabled selected>Select Quality</option>
+    <div class="container">
+        <input type="text" id="url-input" placeholder="Cole o URL do vídeo aqui">
+        <div class="quality-selector">
+            <label for="resolution">Resolução:</label>
+            <select id="resolution">
+                <option value="144p">144p</option>
+                <option value="240p">240p</option>
+                <option value="360p">360p</option>
+                <option value="480p">480p</option>
+                <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
             </select>
-            <button type="submit">Download Video</button>
-        </form>
-        <div id="progress-bar-container" class="animate__animated animate__fadeIn">
+        </div>
+        <button id="path-button">Escolher pasta de destino</button>
+        <button id="download-button">Baixar</button>
+        <div class="progress-container">
             <div id="progress-bar"></div>
         </div>
-        <div id="status" class="animate__animated animate__fadeIn"></div>
+        <p id="status-label"></p>
     </div>
     <script src="renderer.js"></script>
 </body>
