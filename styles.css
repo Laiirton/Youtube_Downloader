@@ -1,0 +1,93 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+}
+
+.titlebar {
+    -webkit-app-region: drag;
+    height: 30px;
+    background: #333;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.titlebar-buttons {
+    -webkit-app-region: no-drag;
+}
+
+.titlebar button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    padding: 0 5px;
+    cursor: pointer;
+}
+
+.titlebar button:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.container {
+    padding: 20px;
+    height: calc(100% - 70px);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-top: 0;
+}
+
+input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.progress-container {
+    width: 100%;
+    background-color: #ddd;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+#progress-bar {
+    width: 0;
+    height: 20px;
+    background-color: #4CAF50;
+    border-radius: 5px;
+    transition: width 0.3s;
+}
+
+#status-label {
+    text-align: center;
+    color: #333;
+    margin-bottom: 0;
+}
