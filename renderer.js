@@ -17,13 +17,14 @@ form.addEventListener('submit', async (e) => {
         return;
     }
 
-    status.textContent = 'Downloading...';
+    status.textContent = 'Initializing download...';
     progressBar.style.width = '0%';
     progressBar.textContent = '0%';
 
     try {
         await window.electronAPI.downloadVideo({ url, outputPath, quality });
     } catch (error) {
+        console.error('Download error:', error);
         status.textContent = `Error: ${error}`;
     }
 });
@@ -40,6 +41,7 @@ window.electronAPI.onDownloadComplete(() => {
 });
 
 window.electronAPI.onDownloadError((event, error) => {
+    console.error('Download error:', error);
     status.textContent = `Error: ${error}`;
 });
 
