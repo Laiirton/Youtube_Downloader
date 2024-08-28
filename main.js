@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { PythonShell } = require('python-shell');
+const path = require('path');
 
 let mainWindow;
 
@@ -47,13 +48,15 @@ ipcMain.on('start-download', (event, { url, resolution, savePath }) => {
     mode: 'text',
     pythonPath: 'python',
     pythonOptions: ['-u'],
-    scriptPath: __dirname,
-    args: [url, resolution, savePath]
+    scriptPath: path.join(__dirname),
+    args: [url, resolution, savePath],
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
   };
 
   let pyshell = new PythonShell('youtube_downloader.py', options);
 
   pyshell.on('message', function (message) {
+    console.log('Python message:', message);
     if (message.startsWith('PROGRESS:')) {
       const percent = parseFloat(message.split(':')[1]);
       event.reply('download-progress', percent);
@@ -61,13 +64,23 @@ ipcMain.on('start-download', (event, { url, resolution, savePath }) => {
       event.reply('download-complete');
     } else if (message.startsWith('ERROR:')) {
       event.reply('download-error', message);
+    } else if (message.startsWith('FINISHED_DOWNLOAD:')) {
+      const filename = message.split(':')[1];
+      event.reply('download-status', `Arquivo salvo: ${filename}`);
+    } else {
+      event.reply('download-status', message);
     }
   });
 
-  pyshell.end(function (err) {
+  pyshell.end(function (err, code, signal) {
     if (err) {
+      console.error('Error:', err);
       event.reply('download-error', err.toString());
+    } else {
+      event.reply('download-complete');
     }
+    console.log('The exit code was: ' + code);
+    console.log('The exit signal was: ' + signal);
   });
 });
 
