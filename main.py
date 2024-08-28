@@ -4,7 +4,7 @@ import logging
 
 def main():
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    root = ttk.Window(themename="superhero")
+    root = ttk.Window(themename="cosmo")
     app = YouTubeDownloaderGUI(root)
     root.mainloop()
 
