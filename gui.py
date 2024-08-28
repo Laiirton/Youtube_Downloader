@@ -11,6 +11,7 @@ class YouTubeDownloaderGUI:
         self.downloader = YouTubeDownloader()
         self.master.title("YouTube Downloader")
         self.master.geometry("900x650")
+        self.master.resizable(False, False)
         self.style = ttk.Style(theme="cosmo")
 
         self.create_widgets()
@@ -19,13 +20,6 @@ class YouTubeDownloaderGUI:
         # Main frame
         self.main_frame = ttk.Frame(self.master, padding=30)
         self.main_frame.pack(fill=BOTH, expand=YES)
-
-        # Title
-        title_frame = ttk.Frame(self.main_frame)
-        title_frame.pack(fill=X, pady=(0, 30))
-        
-        title_label = ttk.Label(title_frame, text="YouTube Downloader", font=("Roboto", 32, "bold"), bootstyle="danger")
-        title_label.pack(side=LEFT)
 
         # URL input
         url_frame = ttk.Frame(self.main_frame)
@@ -50,9 +44,9 @@ class YouTubeDownloaderGUI:
         quality_frame.pack(fill=X, pady=(0, 30))
         quality_label = ttk.Label(quality_frame, text="Quality:", font=("Roboto", 14))
         quality_label.pack(side=LEFT, padx=(0, 10))
-        self.quality_var = tk.StringVar(value="High")
-        quality_combo = ttk.Combobox(quality_frame, textvariable=self.quality_var, values=["High", "Medium", "Low"], font=("Roboto", 14), bootstyle="danger", state="readonly")
-        quality_combo.pack(side=LEFT, expand=YES, fill=X)
+        self.quality_var = tk.StringVar(value="Select Quality")
+        self.quality_combo = ttk.Combobox(quality_frame, textvariable=self.quality_var, font=("Roboto", 14), bootstyle="danger", state="readonly")
+        self.quality_combo.pack(side=LEFT, expand=YES, fill=X)
 
         # Download button
         button_frame = ttk.Frame(self.main_frame)
@@ -68,6 +62,16 @@ class YouTubeDownloaderGUI:
         self.status_label = ttk.Label(self.main_frame, text="", font=("Roboto", 14), wraplength=860, justify="center")
         self.status_label.pack()
 
+        # Window control buttons
+        control_frame = ttk.Frame(self.main_frame)
+        control_frame.pack(fill=X, pady=(10, 0))
+        self.minimize_button = ttk.Button(control_frame, text="_", command=self.minimize_window, bootstyle="outline-secondary", width=5)
+        self.minimize_button.pack(side=LEFT, padx=(0, 5))
+        self.maximize_button = ttk.Button(control_frame, text="□", command=self.maximize_window, bootstyle="outline-secondary", width=5)
+        self.maximize_button.pack(side=LEFT, padx=(0, 5))
+        self.close_button = ttk.Button(control_frame, text="X", command=self.close_window, bootstyle="outline-danger", width=5)
+        self.close_button.pack(side=LEFT, padx=(0, 5))
+
     def choose_output_path(self):
         folder = filedialog.askdirectory()
         if folder:
@@ -77,7 +81,7 @@ class YouTubeDownloaderGUI:
     def start_download(self):
         url = self.url_input.get()
         output_path = self.path_input.get()
-        quality = self.quality_var.get().lower()
+        quality = self.quality_var.get()
 
         if not url or not output_path:
             self.status_label.config(text="Please enter a URL and select a save location.")
@@ -109,3 +113,15 @@ class YouTubeDownloaderGUI:
         self.download_button.config(state=tk.NORMAL)
         self.status_label.config(text=f"Error: {error_message}")
         self.progress_bar['value'] = 0
+
+    def minimize_window(self):
+        self.master.iconify()
+
+    def maximize_window(self):
+        if self.master.state() == 'zoomed':
+            self.master.state('normal')
+        else:
+            self.master.state('zoomed')
+
+    def close_window(self):
+        self.master.destroy()
