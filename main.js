@@ -1,15 +1,16 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
-const ytdl = require('ytdl-core');
 const fs = require('fs');
+const youtubedl = require('youtube-dl-exec');
 
 let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 650,
+    width: 800,
+    height: 600,
     frame: false,
+    resizable: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -41,61 +42,61 @@ function sanitizeFilename(filename) {
 }
 
 ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => {
-  try {
+  return new Promise((resolve, reject) => {
     console.log(`Starting download for URL: ${url}`);
-    const info = await ytdl.getInfo(url);
-    console.log('Video info retrieved successfully');
-    let format;
-    
-    if (quality === 'high') {
-      format = ytdl.chooseFormat(info.formats, { quality: 'highestvideo' });
-    } else if (quality === 'medium') {
-      format = ytdl.chooseFormat(info.formats, { quality: 'highestvideo', filter: format => format.container === 'mp4' });
-    } else {
-      format = ytdl.chooseFormat(info.formats, { quality: 'lowestvideo' });
-    }
-    console.log(`Selected format: ${format.qualityLabel}`);
 
-    // Create output directory if it doesn't exist
-    if (!fs.existsSync(outputPath)) {
-      fs.mkdirSync(outputPath, { recursive: true });
-    }
+    const output = path.join(outputPath, '%(title)s.%(ext)s');
 
-    const sanitizedTitle = sanitizeFilename(info.videoDetails.title);
-    const output = path.join(outputPath, `${sanitizedTitle}.${format.container}`);
-    console.log(`Output file: ${output}`);
-    const video = ytdl(url, { format });
+    const args = [
+      url,
+      '-f', quality,
+      '-o', output,
+      '--no-playlist',
+      '--newline',
+    ];
 
-    let starttime;
-    video.pipe(fs.createWriteStream(output));
+    const downloader = youtubedl.exec(args, {});
 
-    video.once('response', () => {
-      starttime = Date.now();
-      console.log('Download started');
-    });
+    let lastProgress = 0;
 
-    video.on('progress', (chunkLength, downloaded, total) => {
-      const percent = downloaded / total;
-      const downloadedMinutes = (Date.now() - starttime) / 1000 / 60;
-      const estimatedDownloadTime = (downloadedMinutes / percent) - downloadedMinutes;
-      
-      event.sender.send('download-progress', {
-        percent: percent * 100,
-        downloaded: (downloaded / 1024 / 1024).toFixed(2),
-        total: (total / 1024 / 1024).toFixed(2),
-        estimatedTime: estimatedDownloadTime.toFixed(2)
+    downloader.stdout.on('data', (data) => {
+      const lines = data.toString().trim().split('\n');
+      lines.forEach(line => {
+        const progressMatch = line.match(/(\d+\.\d+)%\s+of\s+~?(\d+\.\d+)(\w+)\s+at\s+(\d+\.\d+)(\w+\/s)\s+ETA\s+(\d+:\d+)/);
+        if (progressMatch) {
+          const [, percent, size, unit, speed, speedUnit, eta] = progressMatch;
+          const progress = {
+            percent: parseFloat(percent),
+            totalSize: `${size} ${unit}`,
+            currentSpeed: `${speed} ${speedUnit}`,
+            eta: eta
+          };
+          
+          if (progress.percent > lastProgress + 1) {
+            lastProgress = progress.percent;
+            event.sender.send('download-progress', progress);
+          }
+        }
       });
     });
 
-    video.on('end', () => {
-      console.log('Download completed');
-      event.sender.send('download-complete');
+    downloader.on('close', (code) => {
+      if (code === 0) {
+        console.log('Download completed');
+        event.sender.send('download-complete');
+        resolve('Download completed successfully');
+      } else {
+        const error = `Download failed with code ${code}`;
+        console.error(error);
+        event.sender.send('download-error', error);
+        reject(new Error(error));
+      }
     });
 
-  } catch (error) {
-    console.error('Error in download-video:', error);
-    event.sender.send('download-error', error.message);
-  }
+    downloader.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+    });
+  });
 });
 
 ipcMain.handle('open-folder-dialog', async (event) => {
@@ -106,6 +107,40 @@ ipcMain.handle('open-folder-dialog', async (event) => {
     return null;
   } else {
     return result.filePaths[0];
+  }
+});
+
+ipcMain.handle('get-video-formats', async (event, url) => {
+  try {
+    const result = await youtubedl(url, {
+      dumpSingleJson: true,
+      noCheckCertificates: true,
+      noWarnings: true,
+      preferFreeFormats: true,
+    });
+    
+    const formats = result.formats
+      .filter(format => format.vcodec !== 'none' && format.acodec !== 'none')
+      .map(format => ({
+        format_id: format.format_id,
+        qualityLabel: format.height ? `${format.height}p` : (format.quality_label || 'Audio only'),
+        container: format.ext,
+        resolution: format.height || 0,
+        fps: format.fps || 0,
+        filesize: format.filesize,
+        vcodec: format.vcodec,
+        acodec: format.acodec
+      }))
+      .sort((a, b) => b.resolution - a.resolution || b.fps - a.fps);
+
+    const uniqueFormats = formats.filter((format, index, self) =>
+      index === self.findIndex((t) => t.resolution === format.resolution && t.container === format.container)
+    );
+
+    return uniqueFormats;
+  } catch (error) {
+    console.error('Error fetching video formats:', error);
+    throw error;
   }
 });
 
