@@ -1,35 +1,16 @@
 {
   "name": "youtube_downloader",
   "version": "1.0.0",
-  "description": "A modern YouTube video downloader application with a graphical user interface using Electron.",
+  "description": "YouTube Downloader using Electron",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "build": "electron-builder",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron ."
   },
-  "keywords": ["youtube", "downloader", "electron"],
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "electron": "^32.0.1",
-    "electron-builder": "^24.13.3",
-    "youtube-dl-exec": "^2.5.7"
-  },
-  "build": {
-    "appId": "com.youtube_downloader",
-    "productName": "YouTube Downloader",
-    "directories": {
-      "output": "dist"
-    },
-    "win": {
-      "target": "nsis"
-    },
-    "mac": {
-      "target": "dmg"
-    },
-    "linux": {
-      "target": "AppImage"
-    }
+    "electron": "^25.0.0",
+    "python-shell": "^5.0.0"
   }
 }
