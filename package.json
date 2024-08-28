@@ -14,7 +14,7 @@
   "dependencies": {
     "electron": "^32.0.1",
     "electron-builder": "^24.13.3",
-    "ytdl-core": "^4.11.5"
+    "youtube-dl-exec": "^2.5.7"
   },
   "build": {
     "appId": "com.youtube_downloader",
