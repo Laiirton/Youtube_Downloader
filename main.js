@@ -36,6 +36,10 @@ app.on('window-all-closed', () => {
   }
 });
 
+function sanitizeFilename(filename) {
+  return filename.replace(/[/\\?%*:|"<>]/g, '-');
+}
+
 ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => {
   try {
     const info = await ytdl.getInfo(url);
@@ -49,7 +53,13 @@ ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => 
       format = ytdl.chooseFormat(info.formats, { quality: 'lowestvideo' });
     }
 
-    const output = path.join(outputPath, `${info.videoDetails.title}.${format.container}`);
+    // Create output directory if it doesn't exist
+    if (!fs.existsSync(outputPath)) {
+      fs.mkdirSync(outputPath, { recursive: true });
+    }
+
+    const sanitizedTitle = sanitizeFilename(info.videoDetails.title);
+    const output = path.join(outputPath, `${sanitizedTitle}.${format.container}`);
     const video = ytdl(url, { format });
 
     let starttime;
