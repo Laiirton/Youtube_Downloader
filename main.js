@@ -1,12 +1,15 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const ytdl = require('ytdl-core');
 const fs = require('fs');
 
+let mainWindow;
+
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 900,
     height: 650,
+    frame: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -14,7 +17,7 @@ function createWindow() {
     }
   });
 
-  win.loadFile('index.html');
+  mainWindow.loadFile('index.html');
 }
 
 app.whenReady().then(() => {
@@ -76,4 +79,31 @@ ipcMain.handle('download-video', async (event, { url, outputPath, quality }) => 
   } catch (error) {
     event.sender.send('download-error', error.message);
   }
+});
+
+ipcMain.handle('open-folder-dialog', async (event) => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory']
+  });
+  if (result.canceled) {
+    return null;
+  } else {
+    return result.filePaths[0];
+  }
+});
+
+ipcMain.on('minimize-window', () => {
+  mainWindow.minimize();
+});
+
+ipcMain.on('maximize-window', () => {
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow.maximize();
+  }
+});
+
+ipcMain.on('close-window', () => {
+  mainWindow.close();
 });
