@@ -18,6 +18,7 @@ pathButton.addEventListener('click', () => {
 ipcRenderer.on('directory-selected', (event, path) => {
     savePath = path;
     statusLabel.textContent = `Pasta de destino: ${path}`;
+    statusLabel.classList.add('fade-in');
 });
 
 downloadButton.addEventListener('click', () => {
@@ -25,11 +26,11 @@ downloadButton.addEventListener('click', () => {
     const resolution = resolutionSelect.value;
 
     if (!url || !savePath) {
-        statusLabel.textContent = 'Por favor, insira a URL e escolha a pasta de destino.';
+        showStatus('Por favor, insira a URL e escolha a pasta de destino.', 'error');
         return;
     }
 
-    statusLabel.textContent = 'Baixando...';
+    showStatus('Baixando...', 'info');
     downloadButton.disabled = true;
     progressBar.style.width = '0%';
 
@@ -41,19 +42,19 @@ ipcRenderer.on('download-progress', (event, percent) => {
 });
 
 ipcRenderer.on('download-complete', () => {
-    statusLabel.textContent = 'Download concluído!';
+    showStatus('Download concluído!', 'success');
     downloadButton.disabled = false;
     progressBar.style.width = '100%';
-    urlInput.value = ''; // Limpa o campo de URL após o download
+    urlInput.value = '';
 });
 
 ipcRenderer.on('download-error', (event, error) => {
-    statusLabel.textContent = `Erro: ${error}`;
+    showStatus(`Erro: ${error}`, 'error');
     downloadButton.disabled = false;
 });
 
 ipcRenderer.on('download-status', (event, message) => {
-    statusLabel.textContent = message;
+    showStatus(message, 'info');
 });
 
 minimizeButton.addEventListener('click', () => {
@@ -63,3 +64,8 @@ minimizeButton.addEventListener('click', () => {
 closeButton.addEventListener('click', () => {
     ipcRenderer.send('close-window');
 });
+
+function showStatus(message, type) {
+    statusLabel.textContent = message;
+    statusLabel.className = `fade-in ${type}`;
+}
