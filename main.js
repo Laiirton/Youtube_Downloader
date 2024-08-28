@@ -1,5 +1,4 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-const path = require('path');
 const { PythonShell } = require('python-shell');
 
 let mainWindow;
@@ -12,12 +11,12 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false,
     },
-    frame: false, // Remove a barra de título padrão
-    resizable: false, // Impede o redimensionamento da janela
+    frame: false,
+    resizable: false,
   });
 
   mainWindow.loadFile('index.html');
-  mainWindow.setMenu(null); // Remove o menu do Electron
+  mainWindow.setMenu(null);
 }
 
 app.whenReady().then(createWindow);
@@ -52,12 +51,9 @@ ipcMain.on('start-download', (event, { url, resolution, savePath }) => {
     args: [url, resolution, savePath]
   };
 
-  console.log(`Iniciando download com opções: ${JSON.stringify(options)}`);
-
   let pyshell = new PythonShell('youtube_downloader.py', options);
 
   pyshell.on('message', function (message) {
-    console.log('Python output:', message);
     if (message.startsWith('PROGRESS:')) {
       const percent = parseFloat(message.split(':')[1]);
       event.reply('download-progress', percent);
@@ -70,7 +66,6 @@ ipcMain.on('start-download', (event, { url, resolution, savePath }) => {
 
   pyshell.end(function (err) {
     if (err) {
-      console.error('Erro ao executar o script Python:', err);
       event.reply('download-error', err.toString());
     }
   });
