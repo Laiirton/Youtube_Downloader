@@ -40,7 +40,7 @@ window.electronAPI.onDownloadProgress((event, data) => {
     const percent = data.percent.toFixed(1);
     progressBar.style.width = `${percent}%`;
     progressBar.textContent = `${percent}%`;
-    status.textContent = `Downloaded: ${data.downloaded} of ${data.totalSize} | Speed: ${data.currentSpeed} | ETA: ${data.eta}`;
+    status.textContent = `Downloaded: ${data.totalSize} | Speed: ${data.currentSpeed} | ETA: ${data.eta}`;
 });
 
 window.electronAPI.onDownloadComplete(() => {
@@ -60,7 +60,6 @@ browseButton.addEventListener('click', async () => {
     const result = await window.electronAPI.openFolderDialog();
     if (result) {
         document.getElementById('output-path').value = result;
-        console.log('Selected output path:', result); // Log para verificar o caminho selecionado
     }
 });
 
