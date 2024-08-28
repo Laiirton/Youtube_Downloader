@@ -18,30 +18,43 @@ body, html {
     padding: 0 10px;
 }
 
+.titlebar-drag {
+    flex-grow: 1;
+    text-align: center;
+    font-weight: bold;
+}
+
 .titlebar-buttons {
     -webkit-app-region: no-drag;
+    display: flex;
 }
 
 .titlebar button {
     background: none;
     border: none;
     color: #fff;
-    font-size: 18px;
-    padding: 0 5px;
+    font-size: 16px;
+    padding: 0 10px;
     cursor: pointer;
+    height: 30px;
+    line-height: 30px;
 }
 
 .titlebar button:hover {
     background-color: rgba(255,255,255,0.1);
 }
 
+#close-button:hover {
+    background-color: #e81123;
+}
+
 .container {
     padding: 20px;
-    height: calc(100% - 70px);
+    height: calc(100% - 50px);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
 }
 
 h1 {
