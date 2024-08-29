@@ -19,6 +19,19 @@ def get_available_formats(url):
     result = json.dumps(available_formats)
     return result
 
+def get_video_info(url):
+    ydl_opts = {'quiet': True}
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        video_info = {
+            'title': info['title'],
+            'channel': info['channel'],
+            'duration': info['duration'],
+            'view_count': info['view_count'],
+            'thumbnail': info['thumbnail']
+        }
+    return json.dumps(video_info)
+
 def progress_hook(d):
     if d['status'] == 'downloading':
         p = d['_percent_str']
@@ -58,6 +71,8 @@ if __name__ == "__main__":
         print(f"ERROR: Argumentos incorretos. Recebidos: {sys.argv}", flush=True)
     elif sys.argv[1] == "get_formats":
         print(get_available_formats(sys.argv[2]), flush=True)
+    elif sys.argv[1] == "get_info":
+        print(get_video_info(sys.argv[2]), flush=True)
     elif len(sys.argv) == 4:
         url, format_id, save_path = sys.argv[1], sys.argv[2], sys.argv[3]
         download_video(url, format_id, save_path)
