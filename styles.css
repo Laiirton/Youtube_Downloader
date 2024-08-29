@@ -139,3 +139,69 @@ button:disabled {
 .fade-in {
     animation: fadeIn 0.5s ease;
 }
+
+.format-list {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    max-height: 80vh;
+    max-width: 80vw;
+    width: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.format-list h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    text-align: center;
+}
+
+.format-list button {
+    width: 100%;
+    padding: 12px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.format-list button:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.format-list button .resolution {
+    font-weight: bold;
+}
+
+.format-list button .format {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
