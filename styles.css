@@ -205,3 +205,33 @@ button:disabled {
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 999;
 }
+
+#video-info {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #ffffff;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#video-info img {
+    display: block;
+    margin: 0 auto 10px;
+    border-radius: 5px;
+}
+
+#video-info h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #2c3e50;
+}
+
+#video-info p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #34495e;
+}
+
+#video-info .error {
+    color: #e74c3c;
+}
