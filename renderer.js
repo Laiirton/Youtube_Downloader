@@ -7,6 +7,7 @@ const progressBar = document.getElementById('progress-bar');
 const statusLabel = document.getElementById('status-label');
 const minimizeButton = document.getElementById('minimize-button');
 const closeButton = document.getElementById('close-button');
+const videoInfoContainer = document.getElementById('video-info');
 
 let savePath = '';
 
@@ -72,6 +73,52 @@ minimizeButton.addEventListener('click', () => {
 closeButton.addEventListener('click', () => {
     ipcRenderer.send('close-window');
 });
+
+urlInput.addEventListener('input', debounce(() => {
+    const url = urlInput.value.trim();
+    if (url) {
+        ipcRenderer.send('get-video-info', url);
+    } else {
+        videoInfoContainer.innerHTML = '';
+    }
+}, 500));
+
+ipcRenderer.on('video-info-available', (event, videoInfo) => {
+    videoInfoContainer.innerHTML = `
+        <img src="${videoInfo.thumbnail}" alt="Thumbnail" style="width: 120px; height: auto;">
+        <h3>${videoInfo.title}</h3>
+        <p>Canal: ${videoInfo.channel}</p>
+        <p>Duração: ${formatDuration(videoInfo.duration)}</p>
+        <p>Visualizações: ${formatNumber(videoInfo.view_count)}</p>
+    `;
+});
+
+ipcRenderer.on('video-info-error', (event, error) => {
+    videoInfoContainer.innerHTML = `<p class="error">Erro ao carregar informações do vídeo: ${error}</p>`;
+});
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function formatDuration(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
 
 function showStatus(message, type) {
     statusLabel.textContent = message;
