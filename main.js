@@ -125,3 +125,36 @@ ipcMain.on('minimize-window', () => {
 ipcMain.on('close-window', () => {
   app.quit();
 });
+
+ipcMain.on('get-video-info', (event, url) => {
+  let options = {
+    mode: 'text',
+    pythonPath: 'python',
+    pythonOptions: ['-u'],
+    scriptPath: path.join(__dirname),
+    args: ['get_info', url],
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+  };
+
+  let pyshell = new PythonShell('youtube_downloader.py', options);
+  let output = '';
+
+  pyshell.on('message', function (message) {
+    output += message;
+  });
+
+  pyshell.end(function (err) {
+    if (err) {
+      console.error('Erro ao obter informações do vídeo:', err);
+      event.reply('video-info-error', err.toString());
+    } else {
+      try {
+        const videoInfo = JSON.parse(output.trim());
+        event.reply('video-info-available', videoInfo);
+      } catch (parseError) {
+        console.error('Erro ao fazer parse das informações do vídeo:', parseError);
+        event.reply('video-info-error', 'Erro ao processar as informações do vídeo.');
+      }
+    }
+  });
+});
