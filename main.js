@@ -43,13 +43,53 @@ ipcMain.on('choose-directory', async (event) => {
   }
 });
 
-ipcMain.on('start-download', (event, { url, resolution, savePath }) => {
+ipcMain.on('get-formats', (event, url) => {
+  console.log('Recebida solicitação para obter formatos:', url);
+  let options = {
+    mode: 'text', // Mudar para 'text' para capturar toda a saída
+    pythonPath: 'python',
+    pythonOptions: ['-u'],
+    scriptPath: path.join(__dirname),
+    args: ['get_formats', url],
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+  };
+
+  let pyshell = new PythonShell('youtube_downloader.py', options);
+  let output = ''; // Variável para armazenar a saída
+
+  pyshell.on('message', function (message) {
+    output += message; // Concatenar a saída
+  });
+
+  pyshell.end(function (err) {
+    if (err) {
+      console.error('Erro ao obter formatos:', err);
+      event.reply('download-error', err.toString());
+    } else {
+      if (output) { // Verificar se a saída não está vazia
+        try {
+          const formats = JSON.parse(output.trim()); // Fazer parse após concatenar toda a saída
+          console.log('Formatos parseados:', formats);
+          event.reply('formats-available', formats);
+        } catch (parseError) {
+          console.error('Erro ao fazer parse dos formatos:', parseError);
+          event.reply('download-error', 'Erro ao processar os formatos do vídeo.');
+        }
+      } else {
+        console.error('Nenhum formato recebido');
+        event.reply('download-error', 'Nenhum formato disponível para este vídeo.');
+      }
+    }
+  });
+});
+
+ipcMain.on('start-download', (event, { url, formatId, savePath }) => {
   let options = {
     mode: 'text',
     pythonPath: 'python',
     pythonOptions: ['-u'],
     scriptPath: path.join(__dirname),
-    args: [url, resolution, savePath],
+    args: [url, formatId, savePath],
     env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
   };
 
