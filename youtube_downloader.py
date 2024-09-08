@@ -3,8 +3,42 @@ import yt_dlp
 import os
 import json
 
+def format_time(seconds):
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+def progress_hook(d):
+    if d['status'] == 'downloading':
+        percent = d['_percent_str']
+        speed = d['_speed_str']
+        eta = d['_eta_str']
+        
+        # Calcula o tempo restante estimado
+        if '_eta_str' in d:
+            eta_seconds = d.get('eta', 0)
+            eta_formatted = format_time(eta_seconds)
+        else:
+            eta_formatted = "Desconhecido"
+        
+        # Cria a barra de progresso
+        bar_length = 30
+        filled_length = int(bar_length * d['downloaded_bytes'] // d['total_bytes'])
+        bar = '█' * filled_length + '-' * (bar_length - filled_length)
+        
+        # Formata a mensagem de progresso
+        progress_msg = f"\rProgresso: |{bar}| {percent} | Velocidade: {speed} | ETA: {eta_formatted}"
+        
+        print(progress_msg, end='', flush=True)
+    elif d['status'] == 'finished':
+        print(f"\nDownload concluído: {os.path.basename(d['filename'])}", flush=True)
+
 def get_available_formats(url):
-    ydl_opts = {'quiet': True}
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'no_color': True
+    }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         formats = info['formats']
@@ -20,7 +54,11 @@ def get_available_formats(url):
     return result
 
 def get_video_info(url):
-    ydl_opts = {'quiet': True}
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'no_color': True
+    }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         video_info = {
@@ -32,18 +70,8 @@ def get_video_info(url):
         }
     return json.dumps(video_info)
 
-def progress_hook(d):
-    if d['status'] == 'downloading':
-        p = d['_percent_str']
-        p = p.replace('%','')
-        print(f"PROGRESS:{p}", flush=True)
-    elif d['status'] == 'finished':
-        print(f"FINISHED_DOWNLOAD:{d['filename']}", flush=True)
-
 def download_video(url, format_id, save_path):
     try:
-        print(f"Iniciando download: URL={url}, Format ID={format_id}, Pasta={save_path}", flush=True)
-        
         ydl_opts = {
             'format': f'{format_id}+bestaudio[ext=m4a]/best[ext=mp4]/best',
             'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
@@ -52,17 +80,37 @@ def download_video(url, format_id, save_path):
                 'key': 'FFmpegVideoConvertor',
                 'preferedformat': 'mp4',
             }],
+            'merge_output_format': 'mp4',
+            'quiet': True,
+            'no_warnings': True,
+            'no_color': True,
+            'noprogress': True,
+            'check_formats': True,
+            'ignoreerrors': False,
+            'continuedl': True,
+            'retries': 10,
+            'fragment_retries': 10,
+            'skip_unavailable_fragments': False,
+            'keepvideo': False,
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             filename = ydl.prepare_filename(info)
-            print(f"Arquivo será salvo como: {filename.encode('ascii', 'ignore').decode('ascii')}", flush=True)
+            print(f"Iniciando download: {os.path.basename(filename)}", flush=True)
             ydl.download([url])
         
-        print("COMPLETE", flush=True)
+        if os.path.exists(filename):
+            file_size = os.path.getsize(filename)
+            if file_size > 0:
+                print("\nCOMPLETE", flush=True)
+            else:
+                raise Exception("O arquivo baixado está vazio")
+        else:
+            raise Exception("O arquivo não foi baixado corretamente")
+        
     except Exception as e:
-        print(f"ERROR: {str(e)}", flush=True)
+        print(f"\nERROR: {str(e)}", flush=True)
         import traceback
         print(traceback.format_exc(), flush=True)
 
