@@ -29,6 +29,11 @@ downloadButton.addEventListener('click', () => {
         return;
     }
 
+    if (!isValidUrl(url)) {
+        showStatus('URL inválida. Por favor, insira uma URL válida.', 'error');
+        return;
+    }
+
     showStatus('Carregando formatos disponíveis...', 'info');
     downloadButton.disabled = true;
 
@@ -77,6 +82,10 @@ closeButton.addEventListener('click', () => {
 urlInput.addEventListener('input', debounce(() => {
     const url = urlInput.value.trim();
     if (url) {
+        if (!isValidUrl(url)) {
+            videoInfoContainer.innerHTML = `<p class="error">URL inválida. Por favor, insira uma URL válida.</p>`;
+            return;
+        }
         ipcRenderer.send('get-video-info', url);
     } else {
         videoInfoContainer.innerHTML = '';
@@ -187,4 +196,14 @@ function showFormatSelection(formats) {
         formatList.remove();
         overlay.remove();
     });
+}
+
+function isValidUrl(url) {
+    const urlPattern = new RegExp('^(https?:\\/\\/)?'+ // validate protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|'+ // validate domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR validate ip (v4) address
+        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // validate port and path
+        '(\\?[;&a-z\\d%_.~+=-]*)?'+ // validate query string
+        '(\\#[-a-z\\d_]*)?$','i'); // validate fragment locator
+    return !!urlPattern.test(url);
 }
