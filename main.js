@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { PythonShell } = require('python-shell');
 const path = require('path');
+const fs = require('fs');
 
 let mainWindow;
 
@@ -45,8 +46,13 @@ ipcMain.on('choose-directory', async (event) => {
 
 ipcMain.on('get-formats', (event, url) => {
   console.log('Recebida solicitação para obter formatos:', url);
+  if (!isValidUrl(url)) {
+    event.reply('download-error', 'URL inválida.');
+    return;
+  }
+
   let options = {
-    mode: 'text', // Mudar para 'text' para capturar toda a saída
+    mode: 'text',
     pythonPath: 'python',
     pythonOptions: ['-u'],
     scriptPath: path.join(__dirname),
@@ -55,10 +61,10 @@ ipcMain.on('get-formats', (event, url) => {
   };
 
   let pyshell = new PythonShell('youtube_downloader.py', options);
-  let output = ''; // Variável para armazenar a saída
+  let output = '';
 
   pyshell.on('message', function (message) {
-    output += message; // Concatenar a saída
+    output += message;
   });
 
   pyshell.end(function (err) {
@@ -66,9 +72,9 @@ ipcMain.on('get-formats', (event, url) => {
       console.error('Erro ao obter formatos:', err);
       event.reply('download-error', err.toString());
     } else {
-      if (output) { // Verificar se a saída não está vazia
+      if (output) {
         try {
-          const formats = JSON.parse(output.trim()); // Fazer parse após concatenar toda a saída
+          const formats = JSON.parse(output.trim());
           console.log('Formatos parseados:', formats);
           event.reply('formats-available', formats);
         } catch (parseError) {
@@ -84,6 +90,16 @@ ipcMain.on('get-formats', (event, url) => {
 });
 
 ipcMain.on('start-download', (event, { url, formatId, savePath }) => {
+  if (!isValidUrl(url)) {
+    event.reply('download-error', 'URL inválida.');
+    return;
+  }
+
+  if (!fs.existsSync(savePath)) {
+    event.reply('download-error', 'Caminho de salvamento inválido.');
+    return;
+  }
+
   let options = {
     mode: 'text',
     pythonPath: 'python',
@@ -127,6 +143,11 @@ ipcMain.on('close-window', () => {
 });
 
 ipcMain.on('get-video-info', (event, url) => {
+  if (!isValidUrl(url)) {
+    event.reply('video-info-error', 'URL inválida.');
+    return;
+  }
+
   let options = {
     mode: 'text',
     pythonPath: 'python',
@@ -158,3 +179,13 @@ ipcMain.on('get-video-info', (event, url) => {
     }
   });
 });
+
+function isValidUrl(url) {
+  const urlPattern = new RegExp('^(https?:\\/\\/)?'+ // validate protocol
+    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|'+ // validate domain name
+    '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR validate ip (v4) address
+    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // validate port and path
+    '(\\?[;&a-z\\d%_.~+=-]*)?'+ // validate query string
+    '(\\#[-a-z\\d_]*)?$','i'); // validate fragment locator
+  return !!urlPattern.test(url);
+}

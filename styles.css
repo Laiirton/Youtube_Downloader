@@ -235,3 +235,34 @@ button:disabled {
 #video-info .error {
     color: #e74c3c;
 }
+
+/* Responsive design considerations */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+
+    input, select, button {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .format-list {
+        width: 90%;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+    }
+
+    input, select, button {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .format-list {
+        width: 100%;
+    }
+}
